@@ -192,3 +192,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Terraform
+terraform_1.11.4_linux_amd64.zip
+LICENSE.txt
