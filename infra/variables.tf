@@ -7,10 +7,6 @@ variable "region" {
   description = "Região dos recursos"
   type        = string
 }
-variable "cluster_name" {
-  description = "Nome do Dataproc Cluster"
-  type        = string
-}
 
 variable "service_account" {
   description = "Service account"
@@ -29,5 +25,15 @@ variable "table_id" {
 
 variable "dataset_id" {
   description = "Dataset bigquery"
+  type        = string
+}
+
+variable "image_version" {
+  description = "Versão da imagem do Cloud Composer"
+  type        = string
+}
+
+variable "environment_size" {
+  description = "Tamanho do ambiente do Composer"
   type        = string
 }

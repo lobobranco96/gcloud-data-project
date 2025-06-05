@@ -203,3 +203,4 @@ infra/.terraform
 *.tfstate
 *.tfstate.backup
 *.json
+infra/.terraform.lock.hcl
