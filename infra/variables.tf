@@ -16,3 +16,8 @@ variable "service_account" {
   description = "Service account"
   type        = string
 }
+
+variable "location" {
+  description = "Localização dos recursos"
+  type        = string
+}
