@@ -1,5 +1,5 @@
 #####################
-# Iam Roles
+# Módulo Iam Roles
 #####################
 
 module "iam" {
@@ -8,19 +8,26 @@ module "iam" {
 }
 
 #####################
-# DataProc Cluster
+# Módulo BigQuery
 #####################
 
-module "dataproc_cluster" {
-  source         = "./modules/dataproc"
-  cluster_name   = var.cluster_name
-  region         = var.region
-  service_account = var.service_account
-  environment    = "dev"
+# Criação do dataset "project_dataset"
+module "dataset" {
+  source     = "./modules/bigquery/bigquery_dataset"
+  dataset_id = var.dataset_id
+  location   = var.location
+}
+
+# Criação da tabela "produtos" com schema definido em JSON
+module "produtos" {
+  source     = "./modules/bigquery/bigquery_table"
+  dataset_id = module.dataset.dataset_id
+  table_id   = var.table_id
+  schema     = file("${path.module}/schemas/produtos_schema.json")
 }
 
 #####################
-# Buckets GCS
+# Módulo Buckets GCS
 #####################
 
 # Bucket para dados brutos (raw)
@@ -45,4 +52,16 @@ module "scripts_bucket" {
   name          = "scripts_bucket_lb"
   location      = var.location
   force_destroy = true
+}
+
+#####################
+# Módulo DataProc Cluster
+#####################
+
+module "dataproc_cluster" {
+  source         = "./modules/dataproc"
+  cluster_name   = var.cluster_name
+  region         = var.region
+  service_account = var.service_account
+  environment    = "dev"
 }

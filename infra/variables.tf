@@ -21,3 +21,13 @@ variable "location" {
   description = "Localização dos recursos"
   type        = string
 }
+
+variable "table_id" {
+  description = "Nome da tabela"
+  type        = string
+}
+
+variable "dataset_id" {
+  description = "Dataset bigquery"
+  type        = string
+}
