@@ -196,3 +196,10 @@ cython_debug/
 # Terraform
 terraform_1.11.4_linux_amd64.zip
 LICENSE.txt
+/infra/credential/lobobranco-458901-1258177c3d6e.json
+infra/.terraform
+**/.terraform/
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.json
