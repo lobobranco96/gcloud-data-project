@@ -35,6 +35,25 @@ module "scripts_bucket" {
   force_destroy = true
 }
 
+#####################
+# Módulo BigQuery
+#####################
+
+# Criação do dataset "project_dataset"
+module "dataset" {
+  source     = "./modules/bigquery/bigquery_dataset"
+  dataset_id = var.dataset_id
+  location   = var.location
+}
+
+# Criação da tabela "produtos" com schema definido em JSON
+module "produtos" {
+  source     = "./modules/bigquery/bigquery_table"
+  dataset_id = module.dataset.dataset_id
+  table_id   = var.table_id
+  schema     = file("${path.module}/schemas/produtos_schema.json")
+}
+
 
 #############################
 # Modulo Cloud Composer
