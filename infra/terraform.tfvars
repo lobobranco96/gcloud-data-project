@@ -1,2 +1,4 @@
 project_id = "lobobranco-458901"
 region     = "us-central1"
+cluster_name   = "lobobranco-dataproc"
+service_account = "data-pipeline-sa@lobobranco-458901.iam.gserviceaccount.com"

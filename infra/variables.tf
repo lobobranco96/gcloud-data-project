@@ -7,3 +7,12 @@ variable "region" {
   description = "Região dos recursos"
   type        = string
 }
+variable "cluster_name" {
+  description = "Nome do Dataproc Cluster"
+  type        = string
+}
+
+variable "service_account" {
+  description = "Service account"
+  type        = string
+}

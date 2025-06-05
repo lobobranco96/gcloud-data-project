@@ -1,0 +1,12 @@
+module "iam" {
+  source     = "./modules/iam"
+  project_id = var.project_id
+}
+
+module "dataproc_cluster" {
+  source         = "./modules/dataproc"
+  cluster_name   = var.cluster_name
+  region         = var.region
+  service_account = var.service_account
+  environment    = "dev"
+}
