@@ -12,10 +12,6 @@ logging.basicConfig(
 logger = logging.getLogger("bronze_layer")
 
 def read_csv_with_validation(spark, path, ingest_date):
-    if not os.path.exists(path):
-        logger.warning(f"Arquivo não encontrado: {path}")
-        return None
-
     try:
         df = (
             spark.read
@@ -25,7 +21,7 @@ def read_csv_with_validation(spark, path, ingest_date):
             .csv(path)
         )
         df = df.withColumn("ingest_date", lit(ingest_date))
-        logger.info(f"Leitura concluída para {os.path.basename(path)} com {df.count()} registros.")
+        logger.info(f"Leitura concluída para {path} com {df.count()} registros.")
         return df
     except Exception as e:
         logger.error(f"Erro ao ler {path}: {e}")
