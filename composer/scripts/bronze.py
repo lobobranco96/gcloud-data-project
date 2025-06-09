@@ -31,6 +31,7 @@ def main(raw_path, bronze_path, ingest_date):
     spark = SparkSession.builder \
         .appName("BronzeLayer") \
         .config("spark.sql.shuffle.partitions", "2") \
+        .config("spark.jars", "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.2.0.jar,gs://lakehouse_lb_bucket/jars/delta-storage-2.2.0.jar") \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
         .getOrCreate()

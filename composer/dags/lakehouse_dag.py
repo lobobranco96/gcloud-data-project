@@ -53,12 +53,14 @@ with DAG(
                 "disk_config": {"boot_disk_size_gb": 50}
             },
             "software_config": {
-                "properties": {
-                    "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.2.0.jar",
-                    "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-                    "spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog"
-                }
-            },
+              "image_version": "2.2-debian11",
+              "properties": {
+                  "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.2.0.jar,gs://lakehouse_lb_bucket/jars/delta-storage-2.2.0.jar",
+                  "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
+                  "spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+                  "spark:delta.logStore.class": "org.apache.spark.sql.delta.storage.GCSLogStore"
+              }
+          },
             "gce_cluster_config": {
                 "service_account": "data-pipeline-sa@lobobranco-458901.iam.gserviceaccount.com"
             }
