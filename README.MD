@@ -62,39 +62,77 @@ Este projeto implementa uma arquitetura Lakehouse utilizando Apache Spark e Delt
 - **Cloud Composer (Airflow):** orquestração das pipelines.
 - **Google BigQuery** (com External Tables)
 - **Terraform** (Infraestrutura como Código - IaC)
+
+## Abordagem com Dataproc (GCP)
+
+Este projeto utiliza o [Google Cloud Dataproc](https://cloud.google.com/dataproc) como motor de processamento distribuído com Apache Spark. A arquitetura adotada cria clusters temporários apenas durante a execução da DAG, garantindo um ambiente isolado e otimizado para cada execução.
+
+### O que o Dataproc faz
+
+- Executa jobs Spark em escala distribuída (ETL, transformações em camadas Bronze, Silver e Gold).
+- Interage diretamente com serviços como Cloud Storage e BigQuery.
+- Permite execução rápida e gerenciada de pipelines de dados sem a necessidade de manter clusters permanentemente ativos.
+
+### Criação e destruição automatizada via Airflow
+
+A DAG do Apache Airflow é responsável por:
+
+1. **Criar** dinamicamente um cluster Dataproc com configurações específicas.
+2. **Executar** jobs Spark com operadores como `DataprocSubmitJobOperator` ou `SparkSubmitOperator`.
+3. **Deletar** automaticamente o cluster ao final da DAG, liberando recursos e evitando custos desnecessários.
+
+> Essa abordagem garante escalabilidade sob demanda, com controle total sobre o ciclo de vida do cluster.
+
+### Logs de execução
+
+- O Dataproc armazena logs detalhados (stdout, stderr, Spark Driver e Executors) em um bucket específico no Google Cloud Storage.
+- Estrutura típica de diretórios:
+  - gs://<nome-do-bucket-dataproc-logs>/google-cloud-dataproc-metainfo/<job-id>/
+- Esses logs são essenciais para **debug**, **monitoramento** e **auditoria** das execuções de pipeline.
 ---
 
 ```lua
 ├── composer
 │   ├── dags
 │   │   └── lakehouse_dag.py
+│   ├── jars
+│   │   └── delta-core_2.12-2.2.0.jar
 │   └── scripts
 │       ├── bronze.py
 │       ├── gold.py
 │       └── silver.py
 ├── desenvolvimento_git.ipynb
 ├── docs
-│   ├── bigquery.PNG
-│   ├── bucket_composer.PNG
-│   ├── buckets.PNG
-│   ├── composer2.PNG
-│   ├── composer.PNG
+│   ├── composer2.JPG
+│   ├── composer.JPG
 │   ├── dataproc.PNG
-│   └── iam.PNG
+│   ├── iam.JPG
+│   ├── raw_data.JPG
+│   └── scripts.JPG
 ├── infra
 │   ├── credencial
 │   │   └── lobobranco-458901-1258177c3d6e.json
+│   ├── LICENSE.txt
 │   ├── main.tf
 │   ├── modules
 │   │   ├── composer
 │   │   ├── gcs
 │   │   └── iam
 │   ├── provider.tf
+│   ├── terraform_1.11.4_linux_amd64.zip
 │   ├── terraform.tfstate
 │   ├── terraform.tfstate.backup
 │   ├── terraform.tfvars
 │   └── variables.tf
-└── README.md
+├── LICENSE.txt
+├── raw_data
+│   └── 2025-06-09
+│       ├── customers.csv
+│       ├── inventory_updates.csv
+│       ├── order_items.csv
+│       ├── orders.csv
+│       └── products.csv
+└── README.txt
 ```
 
 ## Como Executar
