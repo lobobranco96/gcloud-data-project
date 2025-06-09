@@ -4,7 +4,7 @@ import logging
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit
 
-# 📋 Configuração do Logger
+# Configuração do Logger
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"

@@ -56,7 +56,7 @@ def main(bronze_path, silver_path, ingest_date):
             .partitionBy("order_date") \
             .save(f"{silver_path}/order_details")
 
-        logger.info("✅ Silver finalizado com sucesso!")
+        logger.info("Silver finalizado com sucesso!")
 
     except Exception as e:
         logger.error(f"Erro durante processamento da camada Silver: {e}")

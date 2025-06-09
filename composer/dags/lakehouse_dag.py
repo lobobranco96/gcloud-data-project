@@ -6,6 +6,7 @@ from airflow.providers.google.cloud.operators.dataproc import (
 )
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
+from pendulum import timezone
 
 PROJECT_ID = "lobobranco-458901"
 REGION = "us-central1"
@@ -33,7 +34,8 @@ with DAG(
     default_args=default_args,
     catchup=False,
     max_active_runs=1,
-    tags=["lakehouse", "dataproc"]
+    tags=["lakehouse", "dataproc"],
+    start_date=datetime(2025, 6, 9, tzinfo=timezone("America/Sao_Paulo"))
 ) as dag:
 
     criar_cluster = DataprocCreateClusterOperator(
@@ -53,14 +55,14 @@ with DAG(
                 "disk_config": {"boot_disk_size_gb": 50}
             },
             "software_config": {
-              "image_version": "2.2.0-RC3-debian11",
-              "properties": {
-                  "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.2.0.jar,gs://lakehouse_lb_bucket/jars/delta-storage-2.2.0.jar",
-                  "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-                  "spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-                  "spark:delta.logStore.class": "org.apache.spark.sql.delta.storage.GCSLogStore"
-              }
-          },
+                "image_version": "2.2-debian12",
+                "properties": {
+                    "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-standalone_2.12-3.3.2.jar,gs://lakehouse_lb_bucket/jars/delta-spark_2.12-3.3.2.jar",
+                    "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
+                    "spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+                    "spark:delta.logStore.class": "org.apache.spark.sql.delta.storage.GCSLogStore"
+                }
+            },
             "gce_cluster_config": {
                 "service_account": "data-pipeline-sa@lobobranco-458901.iam.gserviceaccount.com"
             }
@@ -76,9 +78,9 @@ with DAG(
             "pyspark_job": {
                 "main_python_file_uri": BRONZE_SCRIPT,
                 "args": [
-                    "--raw_path={{ params.raw_path }}/{{ ds }}",
+                    "--raw_path={{ params.raw_path }}/2025-06-09",#{{ ds }}",
                     "--bronze_path={{ params.bronze_path }}",
-                    "--ingest_date={{ ds }}",
+                    "--ingest_date=2025-06-09",#{{ ds }}",
                 ],
             },
         },
