@@ -96,7 +96,8 @@ A DAG do Apache Airflow é responsável por:
 │   ├── dags
 │   │   └── lakehouse_dag.py
 │   ├── jars
-│   │   └── delta-core_2.12-2.2.0.jar
+│   │   ├── delta-spark_2.12-3.3.2.jar
+│   │   └── delta-standalone_2.12-3.3.2.jar
 │   └── scripts
 │       ├── bronze.py
 │       ├── gold.py
@@ -119,7 +120,6 @@ A DAG do Apache Airflow é responsável por:
 │   │   ├── gcs
 │   │   └── iam
 │   ├── provider.tf
-│   ├── terraform_1.11.4_linux_amd64.zip
 │   ├── terraform.tfstate
 │   ├── terraform.tfstate.backup
 │   ├── terraform.tfvars
@@ -132,7 +132,7 @@ A DAG do Apache Airflow é responsável por:
 │       ├── order_items.csv
 │       ├── orders.csv
 │       └── products.csv
-└── README.txt
+├── README.MD
 ```
 
 ## Como Executar
