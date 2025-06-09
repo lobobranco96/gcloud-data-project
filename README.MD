@@ -113,6 +113,7 @@ Isso criará:
   - Buckets no GCS para dados e scripts
   - Ambiente Cloud Composer configurado
   - IAM com permissões apropriadas
+    ![Iam do Projeto](docs/iam.JPG)
 
 2. Enviar DAG e scripts Spark
 
@@ -146,4 +147,4 @@ A consulta pode ser feita diretamente via SQL
 
 ## Contato
 
-Para dúvidas, sugestões ou contribuições, entre em contato: [seu-email@exemplo.com]
+Para dúvidas, sugestões ou contribuições, entre em contato: [rntt2511@gmail.com]
