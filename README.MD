@@ -1,8 +1,4 @@
-# Projeto de dados com serviços da Google Cloud Platform
-
 # Projeto Lakehouse com Delta Lake e Google Cloud Platform
-
-## Descrição
 
 Este projeto implementa uma arquitetura Lakehouse utilizando Apache Spark e Delta Lake, organizando os dados em camadas Bronze, Silver e Gold. O objetivo é estruturar um pipeline de dados robusto para ingestão, transformação e modelagem, garantindo qualidade e facilidade de análise.
 
