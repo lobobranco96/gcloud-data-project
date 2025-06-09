@@ -33,15 +33,18 @@ module "composer_env" {
   project_id       = var.project_id
   image_version    = var.image_version  
   environment_size = var.environment_size
-  service_account = var.service_account
-  
+  service_account  = module.iam.service_account_email
+
+  depends_on = [
+    module.iam
+  ]
 
   pypi_packages = {
-  "apache-airflow-providers-google" = ">=10.0.0"     
-  "google-cloud-dataproc"           = ">=5.0.0"      
-  "google-cloud-storage"            = ">=2.0.0"      
-  "pyspark"                         = ">=3.3.0"      
-}
+    "apache-airflow-providers-google" = ">=10.0.0"     
+    "google-cloud-dataproc"           = ">=5.0.0"      
+    "google-cloud-storage"            = ">=2.0.0"      
+    "pyspark"                         = ">=3.3.0"      
+  }
 }
 
 data "google_project" "project" {

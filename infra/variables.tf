@@ -18,16 +18,6 @@ variable "location" {
   type        = string
 }
 
-variable "table_id" {
-  description = "Nome da tabela"
-  type        = string
-}
-
-variable "dataset_id" {
-  description = "Dataset bigquery"
-  type        = string
-}
-
 variable "image_version" {
   description = "Versão da imagem do Cloud Composer"
   type        = string
