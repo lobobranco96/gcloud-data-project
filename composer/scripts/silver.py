@@ -13,7 +13,10 @@ def main(bronze_path, silver_path, ingest_date):
 
     logger.info("Iniciando transformação para camada Silver")
 
-    spark = SparkSession.builder.appName("SilverLayer").getOrCreate()
+    spark = SparkSession.builder\
+            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+            .appName("SilverLayer").getOrCreate()
 
     try:
         # Carregar dados da camada Bronze filtrando por ingest_date
