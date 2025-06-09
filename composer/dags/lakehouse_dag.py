@@ -53,7 +53,7 @@ with DAG(
                 "disk_config": {"boot_disk_size_gb": 50}
             },
             "software_config": {
-              "image_version": "2.2-debian11",
+              "image_version": "2.2.0-RC3-debian11",
               "properties": {
                   "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.2.0.jar,gs://lakehouse_lb_bucket/jars/delta-storage-2.2.0.jar",
                   "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
