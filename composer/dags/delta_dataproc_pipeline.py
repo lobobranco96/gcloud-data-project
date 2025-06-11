@@ -31,7 +31,6 @@ EXPORT_SCRIPT = "gs://lakehouse_lb_bucket/scripts/gold_to_bigquery.py"
 
 
 default_args = {
-    "start_date": datetime(2025, 6, 11),
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }

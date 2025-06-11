@@ -23,6 +23,7 @@ def export_to_bigquery(logger, df, table_name):
         df.write \
             .format("bigquery") \
             .option("table", f"lobobranco-458901.lakehouse.{table_name}") \
+            .option("temporaryGcsBucket", "lakehouse_lb_bucket/lakehouse_data/tmp") \
             .mode("append") \
             .save()
         logger.info(f"Exportação finalizada: {table_name}")
@@ -36,13 +37,18 @@ def main(spark, gold_path, ingest_date):
 
     logger.info("Iniciando exportação da camada Gold para BigQuery")
 
-    fact_sales_path = f"{gold_path}/fact_sales/ingest_date={ingest_date}"
-    dim_product_path = f"{gold_path}/dim_product/ingest_date={ingest_date}"
-    current_inventory_path = f"{gold_path}/current_inventory/ingest_date={ingest_date}"
+    # Carrega os diretórios principais e aplica filtro por ingest_date
+    fact_sales = spark.read.format("delta") \
+        .load(f"{gold_path}/fact_sales") \
+        .where(f"ingest_date = '{ingest_date}'")
 
-    fact_sales = spark.read.format("delta").load(fact_sales_path)
-    dim_product = spark.read.format("delta").load(dim_product_path)
-    current_inventory = spark.read.format("delta").load(current_inventory_path)
+    dim_product = spark.read.format("delta") \
+        .load(f"{gold_path}/dim_products") \
+        .where(f"ingest_date = '{ingest_date}'")
+
+    current_inventory = spark.read.format("delta") \
+        .load(f"{gold_path}/current_inventory") \
+        .where(f"ingest_date = '{ingest_date}'")
 
     export_to_bigquery(logger, fact_sales, "fact_sales")
     export_to_bigquery(logger, dim_product, "dim_product")
