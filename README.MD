@@ -31,7 +31,7 @@ Este projeto implementa uma arquitetura Lakehouse utilizando Apache Spark e Delt
 
 - **Objetivo:** Criar modelos analíticos otimizados para consumo por BI, dashboards e Machine Learning.
 - **Características:**
-  - Modelagem dimensional com tabelas fato e dimensões (ex: fato vendas, dimensões cliente, produto, tempo).
+  - Modelagem dimensional com tabelas fato e dimensões (ex: fact_sales, dim_customers, dim_products).
   - Permite consultas performáticas e fácil integração com ferramentas externas.
 - **Tecnologias:** Apache Spark, Delta Lake.
 
@@ -39,19 +39,29 @@ Este projeto implementa uma arquitetura Lakehouse utilizando Apache Spark e Delt
 
 ## Fluxo da Pipeline
 
-1. **Ingestão (Bronze):**  
+1 - **Criar Cluster(Dataproc):**
+  - O Cloud Composer inicia um cluster Dataproc temporário com configuração escalável, ideal para processamento distribuído.
+
+2. **Ingestão (Bronze):**  
    - Dados brutos são lidos dos arquivos CSV/Parquet originais.
    - Dados são armazenados em Delta Lake, particionados por data de ingestão.
 
-2. **Transformação (Silver):**  
+3. **Transformação (Silver):**  
    - Dados são carregados da Bronze.
    - São aplicadas limpezas, filtros, deduplicação.
    - Dados são enriquecidos por joins entre tabelas.
    - Resultado salvo em Delta na camada Silver.
 
-3. **Modelagem (Gold):**  
+4. **Modelagem (Gold):**  
    - Dados da Silver são processados para criar tabelas fato e dimensões.
    - Dados prontos para consumo analítico.
+
+5. **Gold to bigquery:**
+  - Exportação - Gold ➝ BigQuery 
+  - Utilizando Spark + BigQuery Connector, os dados da camada Gold são convertidos e exportados diretamente para o BigQuery, viabilizando integrações com ferramentas analíticas.
+
+6. Encerramento:
+  - Após o pipeline ser concluído, o cluster Dataproc é automaticamente deletado para evitar custos.
 
 ---
 
