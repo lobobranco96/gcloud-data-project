@@ -104,6 +104,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument("--silver_path", required=True)
   parser.add_argument("--gold_path", required=True)
+  parser.add_argument('--ingest_date', required=False, help="Data da partição a ser processada")
   args = parser.parse_args()
 
   spark = create_spark_session()
