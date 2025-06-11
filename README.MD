@@ -94,20 +94,29 @@ A DAG do Apache Airflow é responsável por:
 ```lua
 ├── composer
 │   ├── dags
-│   │   └── lakehouse_dag.py
+│   │   └── delta_dataproc_pipeline.py
 │   ├── jars
-│   │   ├── delta-spark_2.12-3.3.2.jar
-│   │   └── delta-standalone_2.12-3.3.2.jar
+│   │   ├── delta-core_2.12-2.3.0.jar
+│   │   └── delta-storage-2.3.0.jar
 │   └── scripts
 │       ├── bronze.py
 │       ├── gold.py
+│       ├── gold_to_bigquery.py
 │       └── silver.py
 ├── desenvolvimento_git.ipynb
 ├── docs
-│   ├── composer2.JPG
+│   ├── bigquery_lakehouse.JPG
+│   ├── cluster_dataproc.JPG
+│   ├── composer_bucket.JPG
 │   ├── composer.JPG
-│   ├── dataproc.PNG
 │   ├── iam.JPG
+│   ├── lakehouse_bucket.JPG
+│   ├── lakehouse_dag.JPG
+│   ├── lakehousedata.JPG
+│   ├── query1.JPG
+│   ├── query2.JPG
+│   ├── query3.JPG
+│   ├── query4.JPG
 │   ├── raw_data.JPG
 │   └── scripts.JPG
 ├── infra
@@ -120,19 +129,25 @@ A DAG do Apache Airflow é responsável por:
 │   │   ├── gcs
 │   │   └── iam
 │   ├── provider.tf
+│   ├── terraform_1.11.4_linux_amd64.zip
 │   ├── terraform.tfstate
 │   ├── terraform.tfstate.backup
 │   ├── terraform.tfvars
 │   └── variables.tf
-├── LICENSE.txt
 ├── raw_data
-│   └── 2025-06-09
+│   ├── 2025-06-09
+│   │   ├── customers.csv
+│   │   ├── inventory_updates.csv
+│   │   ├── order_items.csv
+│   │   ├── orders.csv
+│   │   └── products.csv
+│   └── 2025-06-11
 │       ├── customers.csv
 │       ├── inventory_updates.csv
 │       ├── order_items.csv
 │       ├── orders.csv
 │       └── products.csv
-├── README.MD
+└── README.MD
 ```
 
 ## Como Executar
