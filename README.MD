@@ -167,7 +167,9 @@ A DAG do Apache Airflow é responsável por:
 Os scripts são parametrizados para execução via linha de comando, aceitando argumentos como caminho das camadas e data de ingestão. As pipelines devem ser orquestradas preferencialmente via Airflow para controle e monitoramento.
 
 1. Provisionar infraestrutura com Terraform
-
+  - Essa etapa é essencial, é preciso a key da iam para funcionamento do terraform, adicionar nesse diretorio
+│   ├── credencial
+│   │   └── lobobranco-458901-1258177c3d6e.json
 ```bash
 cd infra
 terraform init
@@ -183,13 +185,13 @@ Isso criará:
 2. Enviar DAG e scripts Spark
 
 ```bash
-gsutil cp composer/dags/lakehouse_dag.py gs://<bucket-composer>/dags/
+gsutil cp composer/dags/delta_dataproc_pipeline.py gs://<bucket-composer>/dags/
 gsutil cp composer/scripts/*.py gs://lakehouse_lb_bucket/scripts/
 ```
 
 3. Executar DAG no Cloud Composer
 
-  - Bronze → Silver → Gold
+  - Bronze → Silver → Gold → Gold_to_Bigquery
 
 4. Consultar dados via BigQuery
 
