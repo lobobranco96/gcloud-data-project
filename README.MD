@@ -5,6 +5,8 @@ Este projeto implementa uma arquitetura Lakehouse utilizando Apache Spark e Delt
 ---
 
 ## Arquitetura e Camadas
+![Arquitetura do Projeto](docs/architetura.png)
+
 
 ### 1. Camada Bronze (Raw + Ingestão)
 
