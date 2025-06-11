@@ -1,8 +1,6 @@
 from airflow import DAG
 from airflow.providers.google.cloud.operators.dataproc import (
-    DataprocCreateClusterOperator,
     DataprocSubmitJobOperator,
-    DataprocDeleteClusterOperator
 )
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
@@ -29,7 +27,7 @@ default_args = {
 }
 
 with DAG(
-    "pipeline_lakehouse",
+    "pipeline_delta_medallion",
     schedule_interval="@daily",
     default_args=default_args,
     catchup=False,
@@ -37,37 +35,6 @@ with DAG(
     tags=["lakehouse", "dataproc"],
     start_date=datetime(2025, 6, 9, tzinfo=timezone("America/Sao_Paulo"))
 ) as dag:
-
-    criar_cluster = DataprocCreateClusterOperator(
-        task_id="criar_cluster",
-        project_id=PROJECT_ID,
-        region=REGION,
-        cluster_name=CLUSTER_NAME,
-        cluster_config={
-            "master_config": {
-                "num_instances": 1,
-                "machine_type_uri": "n1-standard-2",
-                "disk_config": {"boot_disk_size_gb": 50}
-            },
-            "worker_config": {
-                "num_instances": 2,
-                "machine_type_uri": "n1-standard-2",
-                "disk_config": {"boot_disk_size_gb": 50}
-            },
-            "software_config": {
-                "image_version": "2.2-debian12",
-                "properties": {
-                    "spark:spark.jars": "gs://lakehouse_lb_bucket/jars/delta-standalone_2.12-3.3.2.jar,gs://lakehouse_lb_bucket/jars/delta-spark_2.12-3.3.2.jar",
-                    "spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-                    "spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-                    "spark:delta.logStore.class": "org.apache.spark.sql.delta.storage.GCSLogStore"
-                }
-            },
-            "gce_cluster_config": {
-                "service_account": "data-pipeline-sa@lobobranco-458901.iam.gserviceaccount.com"
-            }
-        }
-    )
 
     executar_bronze = DataprocSubmitJobOperator(
         task_id="executar_bronze",
@@ -78,10 +45,14 @@ with DAG(
             "pyspark_job": {
                 "main_python_file_uri": BRONZE_SCRIPT,
                 "args": [
-                    "--raw_path={{ params.raw_path }}/2025-06-09",#{{ ds }}",
+                    "--raw_path={{ params.raw_path }}/2025-06-11",#{{ ds }}",
                     "--bronze_path={{ params.bronze_path }}",
-                    "--ingest_date=2025-06-09",#{{ ds }}",
+                    "--ingest_date=2025-06-11",#{{ ds }}",
                 ],
+            "jar_file_uris": [
+                "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.3.0.jar",
+                "gs://lakehouse_lb_bucket/jars/delta-storage-2.3.0.jar"
+            ]
             },
         },
         params={
@@ -103,6 +74,10 @@ with DAG(
                     "--silver_path={{ params.silver_path }}",
                     "--ingest_date={{ ds }}",
                 ],
+            "jar_file_uris": [
+                "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.3.0.jar",
+                "gs://lakehouse_lb_bucket/jars/delta-storage-2.3.0.jar"
+            ]
             },
         },
         params={
@@ -124,6 +99,10 @@ with DAG(
                     "--gold_path={{ params.gold_path }}",
                     "--ingest_date={{ ds }}",
                 ],
+                "jar_file_uris": [
+                "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.3.0.jar",
+                "gs://lakehouse_lb_bucket/jars/delta-storage-2.3.0.jar"
+            ]
             },
         },
         params={
@@ -132,12 +111,4 @@ with DAG(
         },
     )
 
-    deletar_cluster = DataprocDeleteClusterOperator(
-        task_id="deletar_cluster",
-        project_id=PROJECT_ID,
-        region=REGION,
-        cluster_name=CLUSTER_NAME,
-        trigger_rule=TriggerRule.ALL_DONE,
-    )
-
-    criar_cluster >> executar_bronze >> executar_silver >> executar_gold >> deletar_cluster
+    executar_bronze >> executar_silver >> executar_gold

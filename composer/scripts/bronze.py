@@ -2,6 +2,7 @@ import os
 import argparse
 import logging
 from pyspark.sql import SparkSession
+from pyspark import SparkConf
 from pyspark.sql.functions import lit
 
 # Configuração do Logger
@@ -10,6 +11,19 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("bronze_layer")
+
+def create_spark_session():
+  conf = SparkConf()
+  conf.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+  conf.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+
+  spark = SparkSession.builder \
+        .appName("BronzeDelta") \
+        .config(conf=conf) \
+        .config("spark.sql.shuffle.partitions", "2") \
+        .getOrCreate()
+
+  return spark
 
 def read_csv_with_validation(spark, path, ingest_date):
     try:
@@ -27,11 +41,7 @@ def read_csv_with_validation(spark, path, ingest_date):
         logger.error(f"Erro ao ler {path}: {e}")
         return None
 
-def main(raw_path, bronze_path, ingest_date):
-    spark = SparkSession.builder \
-        .appName("BronzeLayer") \
-        .config("spark.sql.shuffle.partitions", "2") \
-        .getOrCreate()
+def main(spark, raw_path, bronze_path, ingest_date):
 
     logger.info("Iniciando ingestão na camada Bronze...")
 
@@ -65,4 +75,5 @@ if __name__ == "__main__":
     parser.add_argument("--ingest_date", required=True)
     args = parser.parse_args()
 
-    main(args.raw_path, args.bronze_path, args.ingest_date)
+    spark = create_spark_session()
+    main(spark, args.raw_path, args.bronze_path, args.ingest_date)

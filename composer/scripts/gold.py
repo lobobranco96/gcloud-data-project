@@ -1,80 +1,110 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_date, year, month, dayofmonth, dayofweek, expr
+from pyspark import SparkConf
+from pyspark.sql.functions import col, sum as _sum, max as _max
 import argparse
+import logging
 
-def main(silver_path, gold_path, ingest_date):
-    spark = SparkSession.builder \
-            .appName("GoldLayer") \
-            .getOrCreate()
+def create_spark_session():
+  conf = SparkConf()
+  conf.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+  conf.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
 
-    # Lê a tabela silver (order_details)
-    order_details = spark.read.format("delta") \
-        .load(f"{silver_path}/order_details") \
-        .filter(col("order_date") == ingest_date)
+  spark = SparkSession.builder \
+      .appName("GoldDelta") \
+      .config(conf=conf) \
+      .config("spark.sql.shuffle.partitions", "2") \
+      .getOrCreate()
 
-    # Lê a tabela products da bronze (para montar dimensão produto)
-    products = spark.read.format("delta") \
-        .load(f"{silver_path}/products") \
-        .filter(col("ingest_date") == ingest_date) \
-        .dropDuplicates(["product_id"])
+  return spark
 
-    # Lê a tabela customers da silver (ou bronze) para dimensão clientes
-    customers = order_details.select("customer_id", "name", "email").dropDuplicates()
+def build_fact_sales(logger, spark, silver_path, gold_path):
+  try:
+      logger.info("Lendo dados da Silver: orders e order_items")
+      orders = spark.read.format("delta").load(f"{silver_path}/orders_cleaned")
+      order_items = spark.read.format("delta").load(f"{silver_path}/order_items_cleaned")
 
-    # Dimensão tempo gerada a partir da coluna order_date
-    # Extraindo atributos úteis para análises
-    time_dim = order_details.select("order_date").dropDuplicates() \
-        .withColumn("year", year(col("order_date"))) \
-        .withColumn("month", month(col("order_date"))) \
-        .withColumn("day", dayofmonth(col("order_date"))) \
-        .withColumn("day_of_week", dayofweek(col("order_date"))) \
-        .withColumn("quarter", expr("quarter(order_date)"))
+      logger.info("Construindo tabela de fato: fact_sales")
+      fact_sales = orders.join(order_items, on="order_id", how="inner") \
+          .select(
+              "order_id", "customer_id", "product_id", "order_date",
+              "quantity", "unit_price", "total_price", "status"
+          )
 
-    # Tabela fato: juntar detalhes com chave produto e cliente
-    fact_sales = order_details.join(products, "product_id", "left") \
-                              .join(customers, "customer_id", "left") \
-                              .select(
-                                  "order_id",
-                                  "order_date",
-                                  "customer_id",
-                                  "product_id",
-                                  "quantity",
-                                  "unit_price",
-                                  "name",      # cliente nome
-                                  "email",     # cliente email
-                                  "category",  # produto categoria
-                                  "price"      # produto preço original
-                              )
+      logger.info("Escrevendo fact_sales na Gold")
+      fact_sales.write.format("delta") \
+          .mode("overwrite") \
+          .save(f"{gold_path}/fact_sales")
 
-    # Salvar dimensões e fato como delta (com particionamento na dimensão tempo e na fato)
-    customers.write.format("delta") \
-        .mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .save(f"{gold_path}/dim_customers")
+  except Exception as e:
+      logger.error(f"Erro ao construir fact_sales: {e}")
 
-    products.write.format("delta") \
-        .mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .save(f"{gold_path}/dim_products")
+def build_dim_customers(logger, spark, silver_path, gold_path):
+  try:
+      logger.info("Lendo dados da Silver: customers")
+      customers = spark.read.format("delta").load(f"{silver_path}/customers_cleaned")
 
-    time_dim.write.format("delta") \
-        .mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .save(f"{gold_path}/dim_time")
+      logger.info("Construindo dimensão: dim_customers")
+      dim_customers = customers.select("customer_id", "name", "email", "address", "created_at").dropDuplicates(["customer_id"])
 
-    fact_sales.write.format("delta") \
-        .mode("overwrite") \
-        .partitionBy("order_date") \
-        .save(f"{gold_path}/fato_vendas")
+      logger.info("Escrevendo dim_customers na Gold")
+      dim_customers.write.format("delta") \
+          .mode("overwrite") \
+          .save(f"{gold_path}/dim_customers")
 
-    spark.stop()
+  except Exception as e:
+      logger.error(f"Erro ao construir dim_customers: {e}")
 
+def build_dim_products(logger, spark, silver_path, gold_path):
+  try:
+      logger.info("Lendo dados da Silver: products")
+      products = spark.read.format("delta").load(f"{silver_path}/products_cleaned")
+
+      logger.info("Construindo dimensão: dim_products")
+      dim_products = products.select("product_id", "name", "category", "price").dropDuplicates(["product_id"])
+
+      logger.info("Escrevendo dim_products na Gold")
+      dim_products.write.format("delta") \
+          .mode("overwrite") \
+          .save(f"{gold_path}/dim_products")
+
+  except Exception as e:
+      logger.error(f"Erro ao construir dim_products: {e}")
+
+def build_current_inventory(logger, spark, silver_path, gold_path):
+  try:
+      logger.info("Lendo dados da Silver: inventory_cleaned")
+      inventory = spark.read.format("delta").load(f"{silver_path}/inventory_cleaned")
+
+      logger.info("Construindo tabela agregada: current_inventory")
+      current_inventory = inventory.groupBy("product_id") \
+          .agg(_sum("change").alias("stock_quantity"), _max("timestamp").alias("last_updated"))
+
+      logger.info("Escrevendo current_inventory na Gold")
+      current_inventory.write.format("delta") \
+          .mode("overwrite") \
+          .save(f"{gold_path}/current_inventory")
+
+  except Exception as e:
+      logger.error(f"Erro ao construir current_inventory: {e}")
+
+def main(spark, silver_path, gold_path):
+  logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+  logger = logging.getLogger("GoldLayer")
+
+  logger.info("Iniciando processamento da camada Gold")
+
+  build_fact_sales(logger, spark, silver_path, gold_path)
+  build_dim_customers(logger, spark, silver_path, gold_path)
+  build_dim_products(logger, spark, silver_path, gold_path)
+  build_current_inventory(logger, spark, silver_path, gold_path)
+
+  logger.info("Camada Gold finalizada com sucesso")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--silver_path", required=True)
-    parser.add_argument("--gold_path", required=True)
-    parser.add_argument("--ingest_date", required=True)
-    args = parser.parse_args()
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--silver_path", required=True)
+  parser.add_argument("--gold_path", required=True)
+  args = parser.parse_args()
 
-    main(args.silver_path, args.gold_path, args.ingest_date)
+  spark = create_spark_session()
+  main(spark, args.silver_path, args.gold_path)
