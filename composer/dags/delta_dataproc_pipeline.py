@@ -27,9 +27,11 @@ GOLD_PATH = f"{BUCKET}/lakehouse_data/gold"
 BRONZE_SCRIPT = "gs://lakehouse_lb_bucket/scripts/bronze.py"
 SILVER_SCRIPT = "gs://lakehouse_lb_bucket/scripts/silver.py"
 GOLD_SCRIPT = "gs://lakehouse_lb_bucket/scripts/gold.py"
+EXPORT_SCRIPT = "gs://lakehouse_lb_bucket/scripts/gold_to_bigquery.py"
+
 
 default_args = {
-    "start_date": datetime(2025, 6, 1),
+    "start_date": datetime(2025, 6, 11),
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -145,6 +147,30 @@ with DAG(
       },
   )
 
+  exportar_para_bigquery = DataprocSubmitJobOperator(
+      task_id="exportar_para_bigquery",
+      project_id=PROJECT_ID,
+      region=REGION,
+      job={
+          "placement": {"cluster_name": CLUSTER_NAME},
+          "pyspark_job": {
+              "main_python_file_uri": EXPORT_SCRIPT,
+              "args": [
+                  "--gold_path={{ params.gold_path }}",
+                  "--ingest_date={{ ds }}",
+              ],
+              "jar_file_uris": [
+                  "gs://lakehouse_lb_bucket/jars/delta-core_2.12-2.3.0.jar",
+                  "gs://lakehouse_lb_bucket/jars/delta-storage-2.3.0.jar",
+                  "gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar"
+              ],
+          },
+      },
+      params={
+          "gold_path": GOLD_PATH,
+      },
+  )
+
   deletar_cluster = DataprocDeleteClusterOperator(
       task_id="deletar_cluster",
       project_id=PROJECT_ID,
@@ -153,4 +179,4 @@ with DAG(
       trigger_rule=TriggerRule.ALL_DONE,
   )
 
-  criar_cluster >> executar_bronze >> executar_silver >> executar_gold >> deletar_cluster
+  criar_cluster >> executar_bronze >> executar_silver >> executar_gold >> exportar_para_bigquery >> deletar_cluster
